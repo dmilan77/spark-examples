@@ -1,0 +1,29 @@
+{  
+   "type":"record",
+   "name":"myschema",
+   "fields":[  
+      {  
+         "name":"id",
+         "type":"int",
+         "doc":"Type inferred from '1'"
+      },
+      {  
+         "name":"name",
+         "type":"string",
+         "doc":"Type inferred from '\"A green door\"'"
+      },
+      {  
+         "name":"price",
+         "type":"double",
+         "doc":"Type inferred from '12.5'"
+      },
+      {  
+         "name":"tags",
+         "type":{  
+            "type":"array",
+            "items":"string"
+         },
+         "doc":"Type inferred from '[\"home\",\"green\"]'"
+      }
+   ]
+}
