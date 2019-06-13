@@ -4,11 +4,15 @@ import java.io.{ByteArrayInputStream, DataInputStream}
 
 import org.apache.avro.Schema
 import org.apache.avro.generic.{GenericDatumReader, GenericRecord}
-import org.apache.avro.io.DecoderFactory
+import org.apache.avro.io.{DecoderFactory, EncoderFactory}
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.to_json
+import org.apache.spark.sql._
+import org.apache.spark.sql.Row
+import org.apache.spark.sql.types._
 
+import scala.reflect.ClassTag
 
 
 object SparkAvroExample {
@@ -44,8 +48,7 @@ object SparkAvroExample {
       |}""".stripMargin)
 
   def main(args: Array[String]): Unit = {
-//    import spark.implicits._
-  val conf = new SparkConf()
+    val conf = new SparkConf()
     conf.setMaster("local")
     conf.setAppName("SparkAvroExample")
     val sc = new SparkContext(conf)
@@ -58,28 +61,29 @@ object SparkAvroExample {
         .getOrCreate()
     }
 
-    val avroInputDF = spark.read
-      .format("avro")
-      .load("/Users/milandas/Downloads/jsondata.avro")
 
+    val avroInputDF = spark.read.format("avro").load("/Users/milandas/Downloads/jsondata.avro")
 
-    val mappedJson = avroInputDF.toJSON
-//    mappedJson.collect().foreach(converToGenericRecord)
-    mappedJson.collect().foreach(converToGenericRecord)
-//    mappedJson.map(converToGenericRecord).foreach()
+    val mappedJson = avroInputDF.toJSON.map(x=>x)(Encoders.STRING)
+    mappedJson.foreach(x=>processData(x))
 
 
   }
 
-  def converToGenericRecord( in:String): Object = {
+  def processData( in:String): Unit = {
+    val generateTestData:GenericRecord = converToGenericRecord(in)
+    println(generateTestData.getClass)
+    println(generateTestData)
+  }
+  def converToGenericRecord( in:String): GenericRecord = {
     val input = new ByteArrayInputStream(in.getBytes())
     val din = new DataInputStream(input)
     val decoder = DecoderFactory.get().jsonDecoder(schema,din)
     val reader = new GenericDatumReader[Object](schema)
-    val datum = reader.read(null,decoder)
-    println(datum.getClass)
-    println(datum)
-    return datum
+    val datum = reader.read(null,decoder).asInstanceOf[GenericRecord]
+//    println(datum.getClass)
+//    println(datum)
+    datum
   }
 
 }
